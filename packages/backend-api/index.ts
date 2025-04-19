@@ -1,38 +1,24 @@
-import express, { Request } from "express";
-import { getNewsItem, newsList } from "./src/news";
+import express from "express";
+import { getNewsItem, newsList } from "./packages/backend-api/src/news";
+
+
+
 const app = express();
+const port = 8080;
 
-app.use(express.json());
-
-async function createJsonResponse<T>(data: T, req: Request, delay = 0) {
-  await new Promise((resolve) => setTimeout(resolve, delay));
-  const date = new Date();
-  const accessedAt = date.toISOString();
-  console.log(date, req.url);
-  return {
-    ...data,
-    accessedAt,
-  };
-}
-
-app.get("/api/now", async (req, res) => {
-  res.json(await createJsonResponse({}, req));
+app.get("/api/news", (req, res) => {
+  res.json(newsList);
 });
 
-app.get("/api/news", async (req, res) => {
-  res.json(await createJsonResponse({ newsList }, req));
-});
-
-app.get("/api/news/:slug", async (req, res) => {
-  const newsItem = getNewsItem(req.params.slug);
-  if (!newsItem) {
-    res.status(404).end();
-    return;
+app.get("/api/news/:id", (req, res) => {
+  const news = getNewsItem(Number(req.params.id));
+  if (news) {
+    res.json(news);
+  } else {
+    res.status(404).json({ message: "Not found" });
   }
-  res.json(await createJsonResponse({ newsItem }, req));
-  // res.json(await createJsonResponse({ newsItem }, req, 1000)); // 📌:4-7
 });
 
-app.listen(8080, () => {
-  console.log("Server is running on port 8080");
+app.listen(port, () => {
+  console.log(`✅ Backend API server is running on http://localhost:${port}`);
 });

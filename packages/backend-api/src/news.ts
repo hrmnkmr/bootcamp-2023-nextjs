@@ -1,25 +1,27 @@
-import { faker } from "@faker-js/faker";
+export type NewsItem = {
+  publishedAt: string;
+  slug: string;
+  sentence: string;
+  body: string;
+};
 
-const amount = 10;
+export type NewsList = NewsItem[];
 
-function getNewsList() {
-  const from = "2023-01-01T00:00:00.000Z";
-  const to = "2024-01-01T00:00:00.000Z";
-  const newsList = [...new Array(amount)]
-    .map(() => ({
-      publishedAt: faker.date.between(from, to),
-      slug: faker.lorem.slug(),
-      sentence: faker.lorem.sentence(),
-      body: faker.lorem.paragraphs(),
-    }))
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
-    .map((row) => ({ ...row, publishedAt: row.publishedAt.toISOString() }));
-  return newsList;
+export async function getNewsList(): Promise<{
+  newsList: NewsList;
+  accessedAt: string;
+}> {
+  const res = await fetch(`${process.env.BACKEND_API_HOST}/api/news`);
+  const data = await res.json();
+
+  console.log('🎯 getNewsList() のレスポンス:', data);
+
+  for (const item of data.newsList) {
+    if (typeof item.sentence !== 'string') {
+      console.warn('⚠️ sentence に JSX のようなオブジェクトが入っています:', item.sentence);
+    }
+  }
+
+  return data;
 }
 
-export const newsList = getNewsList();
-
-export function getNewsItem(slug: string) {
-  const newsItem = newsList.find((row) => row.slug === slug);
-  return newsItem;
-}
