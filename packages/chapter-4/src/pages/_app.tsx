@@ -1,9 +1,13 @@
-import "@/styles/globals.css";
-import type { AppProps } from "next/app";
+import { AppProps } from 'next/app';
+import React from 'react';
 
 export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+  // `Component` を `React.ComponentType` にキャスト
+  const WrappedComponent = Component as React.ComponentType<any>;
+
+  return <WrappedComponent {...pageProps} />;
 }
+
 
 // import loadsh from "lodash";
 // loadsh.filter([1, 2, 3], (item) => item > 1);
