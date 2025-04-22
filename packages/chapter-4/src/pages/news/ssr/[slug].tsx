@@ -12,10 +12,23 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({
   if (typeof slug !== "string") {
     throw new Error("invalid slug");
   }
-  const { newsItem, accessedAt } = await getNewsItem(slug);
+
+  const slugNumber = Number(slug);
+  if (isNaN(slugNumber)) {
+    throw new Error("invalid slug number");
+  }
+
+  const newsItem = await getNewsItem(slugNumber);
+  if (!newsItem) {
+    return { notFound: true };
+  }
+
+  const accessedAt = new Date().toISOString();
+
   return {
     props: { newsItem, accessedAt, renderedAt: "ssr" },
   };
 };
 
 export default NewsItemPage;
+
