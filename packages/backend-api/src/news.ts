@@ -14,14 +14,11 @@ export async function getNewsList(): Promise<{
   const res = await fetch(`${process.env.BACKEND_API_HOST}/api/news`);
   const data = await res.json();
 
-  console.log('🎯 getNewsList() のレスポンス:', data);
-
-  for (const item of data.newsList) {
-    if (typeof item.sentence !== 'string') {
-      console.warn('⚠️ sentence に JSX のようなオブジェクトが入っています:', item.sentence);
-    }
-  }
-
-  return data;
+  return {
+    newsList: Array.isArray(data) ? data : [],
+    accessedAt: new Date().toISOString()
+  };
 }
+
+
 
