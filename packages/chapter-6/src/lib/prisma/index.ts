@@ -1,4 +1,6 @@
-import { Prisma } from "@/prisma";
+import { PrismaClient, Prisma } from "@prisma/client";
+
+export const prisma = new PrismaClient();
 
 export function isPrismaError(
   err: unknown

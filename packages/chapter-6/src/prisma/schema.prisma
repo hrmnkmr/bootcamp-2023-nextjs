@@ -20,15 +20,15 @@ model User {
 model Tag {
   id    Int     @default(autoincrement()) @id
   name  String  @unique
-  posts Post[]
+  posts Post[]  @relation("PostTags")
 }
 
 model Post {
   id        Int      @default(autoincrement()) @id
   title     String
-  content   String?
+  content   String? @db.VarChar(128)  // 本文（最大128文字）
   published Boolean? @default(false)
   author    User?    @relation(fields: [authorId], references: [id])
   authorId  Int?
-  tags      Tag[]
+  tags      Tag[] @relation("PostTags")
 }

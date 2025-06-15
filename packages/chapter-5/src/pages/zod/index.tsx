@@ -3,9 +3,9 @@ import { useState } from "react";
 import { ZodError, z } from "zod";
 
 const validate = (arg: unknown) => {
-  // 📌:5-1　value は　５文字以内の文字列制約がある
+  //しし
   const schema = z.object({
-    value: z.string().max(5, "5文字で入力してください"),
+    value: z.number().max(5, "5文字で入力してください"),
   });
   //　バリデーション対象のオブジェクト
   const obj = { value: arg };

@@ -10,9 +10,20 @@ export type CreatePostResponse = Post;
 
 const handlePost = apiHandler<CreatePostResponse>(async (req, res) => {
   const data = createPostInputSchema.parse(req.body);
-  const result = await prisma.post.create({ data });
+  const { tagIds, ...postData } = data;
+
+  const result = await prisma.post.create({
+    data: {
+      ...postData,
+      tags: {
+        connect: tagIds?.map((id: number) => ({ id })) || [],
+      },
+    },
+  });
+
   res.status(201).json(succeed(result));
 });
+
 
 const handler: ApiHandler = (req, res) => {
   switch (req.method) {

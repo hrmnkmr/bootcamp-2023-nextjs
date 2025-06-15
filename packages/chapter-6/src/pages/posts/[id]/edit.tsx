@@ -1,27 +1,43 @@
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { TagSelector } from "@/components/TagSelector";
 import { gssp } from "@/lib/next/gssp";
 import { updatePostInputSchema, UpdatePostInputSchemaType } from "@/lib/zod";
-import { Post, prisma } from "@/prisma";
+import { prisma, Post } from "@/prisma";
 import { updatePost } from "@/services/client/posts";
+import { getAllTags } from "@/services/client/tag";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 type Props = {
-  post: Post;
+  post: Post & { tags: { id: number; name: string }[] };
 };
 
 const Page = ({ post }: Props) => {
   const router = useRouter();
   const [error, setError] = useState<string>();
-  const { handleSubmit, register, formState } =
-    useForm<UpdatePostInputSchemaType>({
-      defaultValues: post, // 📌:6-3 サーバーで取得したデータを、初期値として設定
-      resolver: zodResolver(updatePostInputSchema),
-    });
+  const [tags, setTags] = useState<{ id: number; name: string }[]>([]);
+  const [selectedTags, setSelectedTags] = useState<number[]>(
+    post.tags.map((t) => t.id)
+  );
+
+  const defaultValues = {
+    title: post.title,
+    content: post.content ?? undefined,
+  };
+
+  const { handleSubmit, register, formState } = useForm<UpdatePostInputSchemaType>({
+    defaultValues,
+    resolver: zodResolver(updatePostInputSchema),
+  });
+
+  useEffect(() => {
+    getAllTags().then(setTags).catch(() => setTags([]));
+  }, []);
+
   return (
     <form
       onSubmit={handleSubmit(async (values) => {
@@ -30,6 +46,15 @@ const Page = ({ post }: Props) => {
           setError(err.message);
           return;
         }
+
+        await fetch(`/api/posts/${post.id}/tags`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tagIds: selectedTags }),
+        });
+
         router.push(`/posts/${data.id}`);
       })}
     >
@@ -42,7 +67,18 @@ const Page = ({ post }: Props) => {
             <ErrorMessage message={formState.errors.title?.message} />
           </label>
         </div>
-        {/* <div> ✏️ ② </div> */}
+        <div>
+          <label>
+            content:
+            <textarea {...register("content")} />
+            <ErrorMessage message={formState.errors.content?.message} />
+          </label>
+        </div>
+        <TagSelector
+          tags={tags}
+          selectedTags={selectedTags}          // correct prop name
+          setSelectedTags={setSelectedTags}    // correct prop name
+        />
       </fieldset>
       <hr />
       <button>submit</button>
@@ -54,10 +90,11 @@ const Page = ({ post }: Props) => {
 };
 
 export const getServerSideProps = gssp<Props>(async ({ query }) => {
-  // パスパラメーターの id を取得、数値として評価できるかを検証
   const { id } = z.object({ id: z.coerce.number() }).parse(query);
-  // 📌:6-2 Postテーブルから ID が一致するレコードを取得
-  const post = await prisma.post.findUnique({ where: { id } });
+  const post = await prisma.post.findUnique({
+    where: { id },
+    include: { tags: true },
+  });
   if (!post) return { notFound: true };
   return { props: { post } };
 });
